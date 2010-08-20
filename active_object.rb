@@ -5,9 +5,9 @@ require 'thread' # Thread, Mutex, Queue
 #
 # * Kurt Stephens
 # * 2010/08/19
-# * Slides -- http://kurtstephens.com/pub/active_object_pattern_in_ruby/active_object.slides/
-# * Code -- http://kurtstephens.com/pub/active_object_pattern_in_ruby/
-# * Git  -- http://github.com/kstephens/active_object_pattern_in_ruby
+# * Slides -- "":http://kurtstephens.com/pub/active_object_pattern_in_ruby/active_object.slides/
+# * Code -- "":http://kurtstephens.com/pub/active_object_pattern_in_ruby/
+# * Git  -- "":http://github.com/kstephens/active_object_pattern_in_ruby
 
 # !SLIDE
 # Objective
@@ -22,8 +22,8 @@ require 'thread' # Thread, Mutex, Queue
 # !SLIDE
 # Design Pattern
 #
-# * http://en.wikipedia.org/wiki/Design_pattern_%28computer_science%29
-# * http://en.wikipedia.org/wiki/Active_object
+# * "":http://en.wikipedia.org/wiki/Design_pattern_%28computer_science%29
+# * "":http://en.wikipedia.org/wiki/Active_object
 
 # !SLIDE
 # Design
