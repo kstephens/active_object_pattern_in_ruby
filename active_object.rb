@@ -4,8 +4,10 @@ require 'thread' # Thread, Mutex, Queue
 # Active Object pattern in Ruby
 #
 # * Kurt Stephens
-# * 2010/08/06
-# * http://kurtstephens.com/pub/active_object_pattern_in_ruby/
+# * 2010/08/19
+# * Slides -- http://kurtstephens.com/pub/active_object_pattern_in_ruby/active_object.slides/
+# * Code -- http://kurtstephens.com/pub/active_object_pattern_in_ruby/
+# * Git  -- http://github.com/kstephens/active_object_pattern_in_ruby
 
 # !SLIDE
 # Objective
@@ -108,6 +110,8 @@ module ActiveObject
       # Signal Thread to stop working on queue.
       class Stop < ::Exception; end
 
+      @@active_facades = nil
+
       def initialize target
         super
         @thread = nil
@@ -115,7 +119,7 @@ module ActiveObject
         @queue = Queue.new
         @running = false
         @stopped = false
-        @@active_facades << self
+        (@@active_facades ||= [ ]) << self
       end
 
       # !SLIDE
@@ -323,147 +327,4 @@ module ActiveObject
 
 end
 # !SLIDE END
-
-# !SLIDE 
-# Example
-#
-# * Two objects send messages back and forth to each other N times.
-# * Mixin ActiveObject to each class.
-
-# !SLIDE
-# Base class for example objects
-class Base
-  include ActiveObject::Mixin
-
-  # Prepare to do activity N times.
-  def initialize
-    _log { "" }
-    @counter = 1
-  end
-
-  # Stop its ActiveObject::Facade when @counter is depleated.
-  def decrement_counter_or_stop
-    if @counter > 0
-      @counter -= 1
-      true
-    else
-      _active_facade._active_stop!
-      false
-    end
-  end
-
-  include ActiveObject::Logging
-  def _log_prefix; ""; end
-end
-
-# !SLIDE
-# class A
-# Sends b.do_b
-class A < Base
-  attr_accessor :b
-
-  def do_a msg
-    _log { "msg=#{msg.inspect} @counter=#{@counter}" }
-    if decrement_counter_or_stop
-      b.do_b(msg) do | result | 
-        _log { "result=#{result.inspect} " }
-      end
-      sleep(1)
-    end
-    [ :a, @counter ]
-  end
-end
-
-# !SLIDE
-# class B
-# Sends a.do_a
-class B < Base
-  attr_accessor :a
-
-  def do_b msg
-    _log { "msg=#{msg.inspect} @counter=#{@counter}" }
-    if decrement_counter_or_stop
-      a.do_a(msg) do | result | 
-        _log { "result=#{result.inspect} " }
-      end
-      sleep(1)
-    end
-    [ :b, @counter ]
-  end
-end
-
-# !SLIDE :name example_1 :capture_code_output true
-# Example with Identity Facade
-
-puts "Example with Identity Facade" # !SLIDE IGNORE
-A.active_facade = B.active_facade = nil # ActiveObject::Facade::Identity
-a = A.new
-b = B.new
-
-a.b = b
-b.a = a
-
-a.do_a("Foo") 
-b.do_b("Bar") 
-
-ActiveObject::Facade::Active.join
-
-$stderr.puts "DONE!"
-
-# !SLIDE END
-
-# !SLIDE :name example_2 :capture_code_output true
-# Example with Active Facade
-
-puts "Example with Active Facade" # !SLIDE IGNORE
-A.active_facade = B.active_facade = ActiveObject::Facade::Active
-a = A.new
-b = B.new
-
-a.b = b
-b.a = a
-
-a.do_a("Foo") 
-b.do_b("Bar") 
-
-ActiveObject::Facade::Active.join
-
-$stderr.puts "DONE!"
-
-# !SLIDE END
-
-# !SLIDE :name example_3 :capture_code_output true
-# Example with Active Distributor
-
-puts "Example with Active Distributor" # !SLIDE IGNORE
-A.active_facade = B.active_facade = ActiveObject::Facade::Distributor
-a = A.new
-b = B.new
-
-a.b = b
-b.a = a
-
-a._active_add_distributee! ActiveObject::Facade::Active
-a._active_add_distributee! ActiveObject::Facade::Active
-b._active_add_distributee! ActiveObject::Facade::Active
-b._active_add_distributee! ActiveObject::Facade::Active
-
-a.do_a("Foo") 
-b.do_b("Bar") 
-
-ActiveObject::Facade::Active.join
-
-$stderr.puts "DONE!"
-
-# !SLIDE END
-
-# !SLIDE 
-# Conclusion
-#
-# * Simple, easy-to-use API.
-# * Does not require redesign of existing objects.
-# * Supports asynchronous results.
-#
-
-exit 0
 
