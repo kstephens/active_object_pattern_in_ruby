@@ -81,11 +81,7 @@ module ActiveObject
       def method_missing selector, *arguments, &block
         _log { "#{selector} #{arguments.inspect}" }
         result = @target.__send__(selector, *arguments)
-        if block
-          block.call(result)
-        else
-          nil
-        end
+        block ? block.call(result) : nil
       end
 
       # Nothing to start; this Facade is not active.
@@ -110,8 +106,8 @@ module ActiveObject
       # Signal Thread to stop working on queue.
       class Stop < ::Exception; end
 
-      @@active_facades = nil
-
+      # !SLIDE
+      # Active Facade Initialization
       def initialize target
         super
         @thread = nil
@@ -119,7 +115,6 @@ module ActiveObject
         @queue = Queue.new
         @running = false
         @stopped = false
-        (@@active_facades ||= [ ]) << self
       end
 
       # !SLIDE
@@ -137,27 +132,35 @@ module ActiveObject
       # Message
       #
       # Encapsulates Ruby message.
-      # If block is provided, call it with result after Message invocation.
       class Message
         include Logging
         attr_accessor :facade, :selector, :arguments, :block, :thread
         attr_accessor :result, :exception
-        
+
+        # !SLIDE
+        # Message Initialization
+        #
+        # Capture the requesting Thread to return any Exceptions back to requestor.
         def initialize facade, selector, arguments, block
           _log { "facade=@#{facade.object_id} selector=#{selector.inspect} arguments=#{arguments.inspect}" }
           @facade, @selector, @arguments, @block = facade, selector, arguments, block
           @thread = ::Thread.current
         end
+        # !SLIDE END
         
+        # !SLIDE
+        # Message Invocation
+        #
+        # If block was provided, call it with result after Message invocation.
+        # If Exception was raised, forward it to the requesting Thread.
         def invoke!
           _log { "@facade=@#{@facade.object_id}" }
           @result = @facade._active_target.__send__(@selector, *@arguments)
-          if @block
-            @block.call(@result)
-          end
+          @block.call(@result) if @block
         rescue Exception => exc
-          @thread.raise exc
+          @thread.raise(@exception = exc)
         end
+        # !SLIDE END
       end
       
       # !SLIDE
@@ -187,13 +190,14 @@ module ActiveObject
             _log { "Thread.new" }
             @running = true
             Active.active_facades << self
-            while @running
+            while @running && ! @stopped
               begin
                 _active_dequeue.invoke! if @running && ! @stopped
               rescue Stop => exc
                 _log { "stopping via #{exc.class}" }
               end
             end
+            Active.active_facades.delete(self)
             _log { "stopped" }
             self
           end
@@ -239,6 +243,7 @@ module ActiveObject
       @thread
     end
 
+    @@active_facades = nil
     def self.active_facades
       @@active_facades ||= [ ]
     end
@@ -253,7 +258,7 @@ module ActiveObject
     end
     # !SLIDE END
 
-    # !Slide
+    # !SLIDE :index 800
     # Multiple workers
     #
     # Distributor distributes work to Threads via round-robin.

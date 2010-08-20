@@ -10,7 +10,7 @@ end
 
 task :slides => 
   [ 
-   'active_object.slides',
+   'active_object.slides/index.html',
   ]
 
 ENV['SCARLET'] ||= File.expand_path("../../scarlet/bin/scarlet", __FILE__)
@@ -21,11 +21,11 @@ file 'active_object.slides/index.html' => [ 'active_object.rb', 'example_class.r
 end
 
 task :publish => [ :slides ] do
-  sh "rsync -n -aruzv --exclude='.git' --exclude='.riterate' ./ kscom:kurtstephens.com/pub/#{File.basename(File.dirname(__FILE__))}/"
+  sh "rsync $RSYNC_OPTS -aruzv --delete-excluded --exclude='.git' --exclude='.riterate' ./ kscom:kurtstephens.com/pub/#{File.basename(File.dirname(__FILE__))}/"
 end
 
 task :clean do
-  sh "rm -rf active_object.slides* .riterate"
+  sh "rm -rf *.slides* .riterate"
 end
 
 
