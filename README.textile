@@ -1,0 +1,16 @@
+h1. Active Object pattern in Ruby
+
+* Kurt Stephens
+* 2010/08/19
+* Slides -- "http://kurtstephens.com/pub/active_object_pattern_in_ruby/active_object.slides/":http://kurtstephens.com/pub/active_object_pattern_in_ruby/active_object.slides/
+* Code -- "http://kurtstephens.com/pub/active_object_pattern_in_ruby/":http://kurtstephens.com/pub/active_object_pattern_in_ruby/
+* Git  -- "http://github.com/kstephens/active_object_pattern_in_ruby":http://github.com/kstephens/active_object_pattern_in_ruby
+
+h2. Objective
+
+* Simplify inter-thread communication and management.
+* Provide a thread-safe Facade to object methods.
+* Select ActiveObject Facade at run-time.
+* Allow objects to execute work safely in their own thread.
+* Simple API.
+
