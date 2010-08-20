@@ -8,6 +8,9 @@ require 'thread' # Thread, Mutex, Queue
 # * Slides -- "":http://kurtstephens.com/pub/active_object_pattern_in_ruby/active_object.slides/
 # * Code -- "":http://kurtstephens.com/pub/active_object_pattern_in_ruby/
 # * Git  -- "":http://github.com/kstephens/active_object_pattern_in_ruby
+# * Tools 
+# ** Riterate -- "":http://github.com/kstephens/riterate
+# ** Scarlet -- "":http://github.com/kstephens/scarlet
 
 # !SLIDE
 # Objective
