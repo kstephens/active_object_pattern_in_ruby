@@ -17,7 +17,7 @@ class Base
     @counter = 1
   end
 
-  # Stop its ActiveObject::Facade when @counter is depleated.
+  # Stop its ActiveObject::Facade when @counter decrements to 0.
   def decrement_counter_or_stop
     if @counter > 0
       @counter -= 1
@@ -34,14 +34,14 @@ end
 
 # !SLIDE
 # class A
-# Sends b.do_b
+# A#foo - Sends b.bar, until @counter == 0.
 class A < Base
   attr_accessor :b
 
-  def do_a msg
+  def foo msg
     _log { "msg=#{msg.inspect} @counter=#{@counter}" }
     if decrement_counter_or_stop
-      b.do_b(msg) do | result | 
+      b.bar(msg) do | result | 
         _log { "result=#{result.inspect} " }
       end
       sleep(1)
@@ -52,14 +52,14 @@ end
 
 # !SLIDE
 # class B
-# Sends a.do_a
+# B#bar - Sends a.foo, until @counter == 0.
 class B < Base
   attr_accessor :a
 
-  def do_b msg
+  def bar msg
     _log { "msg=#{msg.inspect} @counter=#{@counter}" }
     if decrement_counter_or_stop
-      a.do_a(msg) do | result | 
+      a.foo(msg) do | result | 
         _log { "result=#{result.inspect} " }
       end
       sleep(1)

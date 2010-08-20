@@ -2,16 +2,16 @@
 # Example with Identity Facade
 
 require 'example_class'
-puts "Example with Identity Facade" # !SLIDE IGNORE
-A.active_facade = B.active_facade = nil # ActiveObject::Facade::Identity
+$stderr.puts "Example with Identity Facade" # !SLIDE IGNORE
+A.active_facade = B.active_facade = nil
 a = A.new
 b = B.new
 
 a.b = b
 b.a = a
 
-a.do_a("Foo") 
-b.do_b("Bar") 
+a.foo("Foo") 
+b.bar("Bar") 
 
 ActiveObject::Facade::Active.join
 
@@ -23,7 +23,7 @@ $stderr.puts "DONE!"
 # Example with Active Facade
 
 require 'example_class'
-puts "Example with Active Facade" # !SLIDE IGNORE
+$stderr.puts "Example with Active Facade" # !SLIDE IGNORE
 A.active_facade = B.active_facade = ActiveObject::Facade::Active
 a = A.new
 b = B.new
@@ -31,8 +31,8 @@ b = B.new
 a.b = b
 b.a = a
 
-a.do_a("Foo") 
-b.do_b("Bar") 
+a.foo("Foo") 
+b.bar("Bar") 
 
 ActiveObject::Facade::Active.join
 
@@ -44,7 +44,7 @@ $stderr.puts "DONE!"
 # Example with Active Distributor
 
 require 'example_class'
-puts "Example with Active Distributor" # !SLIDE IGNORE
+$stderr.puts "Example with Active Distributor" # !SLIDE IGNORE
 A.active_facade = B.active_facade = ActiveObject::Facade::Distributor
 a = A.new
 b = B.new
@@ -57,8 +57,8 @@ a._active_add_distributee! ActiveObject::Facade::Active
 b._active_add_distributee! ActiveObject::Facade::Active
 b._active_add_distributee! ActiveObject::Facade::Active
 
-a.do_a("Foo") 
-b.do_b("Bar") 
+a.foo("Foo") 
+b.bar("Bar") 
 
 ActiveObject::Facade::Active.join
 

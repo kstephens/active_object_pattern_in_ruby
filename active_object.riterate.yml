@@ -1,0 +1,42 @@
+--- 
+riterate: 
+  do_not_update: true
+  ordered_slides: 
+  - Active Object pattern in Ruby
+  - Objective
+  - Design Pattern
+  - Ruby Pattern for Asynchronous Results
+  - Implementation
+  - Facade
+  - Identity Facade
+  - Delegate message directly
+  - Identity Thread Management
+  - Facade Mixin
+  - Facade Interface
+  - ActiveObject Mixin
+  - Example
+  - Base class for example objects
+  - class A
+  - class B
+  - Example with Identity Facade
+  - Example with Active Facade
+  - Active Facade
+  - Active Facade Initialization
+  - Active Facade Support
+  - Intercept Message
+  - Message
+  - Message Initialization
+  - Message Invocation
+  - Message Queuing
+  - Start worker Thread
+  - Stop worker Thread
+  - Example with Active Distributor
+  - Distributor
+  - Distributor Initialization
+  - Intercept and Distribute Messages
+  - Add Mulitple Facades
+  - Conclusion
+  - Logging
+  unknown_slides: []
+  unordered_slides: []
+  version: "1.0"

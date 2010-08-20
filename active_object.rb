@@ -4,7 +4,7 @@ require 'thread' # Thread, Mutex, Queue
 # Active Object pattern in Ruby
 #
 # * Kurt Stephens
-# * 2010/08/19
+# * 2010/08/20
 # * Slides -- "":http://kurtstephens.com/pub/active_object_pattern_in_ruby/active_object.slides/
 # * Code -- "":http://kurtstephens.com/pub/active_object_pattern_in_ruby/
 # * Git  -- "":http://github.com/kstephens/active_object_pattern_in_ruby
@@ -17,8 +17,9 @@ require 'thread' # Thread, Mutex, Queue
 #
 # * Simplify inter-thread communication and management.
 # * Provide a thread-safe Facade to object methods.
-# * Select ActiveObject Facade at run-time.
 # * Allow objects to execute work safely in their own thread.
+# * Handle results asynchronously.
+# * Select Active Object Facade at run-time.
 # * Simple API.
 
 
@@ -29,11 +30,29 @@ require 'thread' # Thread, Mutex, Queue
 # * "":http://en.wikipedia.org/wiki/Active_object
 
 # !SLIDE
-# Design
+# Implementation
 #
 # * ActiveObject::Mixin - module to mixin to existing classes.
-# * ActiveObject::Facade - object to receive and enqueue messages, owns thread to process queued messages.
-# * ActiveObject::Message - encapsulate message for proxy for later execution by thread. 
+# * ActiveObject::Facade - encapsuates object to receive messages.
+# * ActiveObject::Facade::Identity - passive facade delivers message immediately to current Thread.
+# * ActiveObject::Facade::Active - active facade managing a Thread and a Queue of Messages.
+# * ActiveObject::Facade::Active::Message - encapsulate message for proxy for later execution by thread. 
+
+=begin
+# !SLIDE
+# Ruby Pattern for Asynchronous Results
+
+do_something_with(target.selector(*arguments))
+
+# => 
+
+target.selector(*arguments) do | result |
+  do_something_with(result)
+end
+
+# !SLIDE END
+
+=end
 
 # !SLIDE 
 # ActiveObject Mixin
@@ -67,8 +86,7 @@ module ActiveObject
 
     def initialize target
       _log { "target=@#{target.object_id}" }
-      @target = target
-      target._active_facade = self
+      (@target = target)._active_facade = self
     end
 
     # !SLIDE
@@ -87,6 +105,9 @@ module ActiveObject
         block ? block.call(result) : nil
       end
 
+      # !SLIDE
+      # Identity Thread Management
+
       # Nothing to start; this Facade is not active.
       def _active_start!
         self
@@ -97,6 +118,8 @@ module ActiveObject
         # NOTHING.
         self
       end
+
+      # !SLIDE END
     end
 
     # !SLIDE
@@ -113,15 +136,13 @@ module ActiveObject
       # Active Facade Initialization
       def initialize target
         super
-        @thread = nil
         @mutex = Mutex.new
         @queue = Queue.new
-        @running = false
-        @stopped = false
+        @running = @stopped = false
       end
 
       # !SLIDE
-      # Enqueue Message
+      # Intercept Message
       #
       # Intercept message on behalf of @target.
       # Construct Message and place it in its Queue.
@@ -167,7 +188,7 @@ module ActiveObject
       end
       
       # !SLIDE
-      # Queuing
+      # Message Queuing
       def _active_enqueue message
         return if @stopped
         _log { "message=@#{message.object_id} @queue.size=#{@queue.size}" }
@@ -236,7 +257,7 @@ module ActiveObject
 
 
     # !SLIDE
-    # Support
+    # Active Facade Support
 
     def _active_target
       @target
@@ -261,45 +282,56 @@ module ActiveObject
     end
     # !SLIDE END
 
-    # !SLIDE :index 800
-    # Multiple workers
+    # !SLIDE
+    # Distributor
     #
-    # Distributor distributes work to Threads via round-robin.
+    # Distributor distributes work to other Facades via round-robin.
     class Distributor < Identity
+
+      # !SLIDE 
+      # Distributor Initialization
       def initialize target
         super
         @mutex = Mutex.new
         @target_list = [ ]
-        @target_index = 0
+        @target_index = -1
       end
 
+      # !SLIDE
+      # Intercept and Distribute Messages
       def method_missing selector, *arguments, &block
         _log { "#{selector} #{arguments.inspect}" }
         if @target_list.empty?
           super
         else
-          target = nil
-          @mutex.synchronize do
-            target = @target_list[@target_index]
-            @target_index = (@target_index + 1) % @target_list.size
+          target = @mutex.synchronize do
+            @target_list[@target_index = 
+                         (@target_index + 1) % @target_list.size]
           end
           raise Error, "No target" unless target
           target.method_missing(selector, *arguments, &block)
         end
       end
+      # !SLIDE END
 
+      # !SLIDE
+      # Add Mulitple Facades
       def _active_add_distributee! cls, new_target = nil
         @mutex.synchronize do
           target = new_target || (Proc === @target ? @target.call : @target.clone)
           @target_list << cls.new(target)
         end
       end
+      # !SLIDE END
     end
+    # !SLIDE END
   end
 
 
   # !SLIDE
-  # Glue Facade to including Class.
+  # Facade Mixin
+  #
+  # Glue Facade to including Class
   module Mixin
     def self.included target
       super
@@ -312,7 +344,7 @@ module ActiveObject
     attr_accessor :_active_facade
 
     # !SLIDE
-    # Facade interface.
+    # Facade Interface
     module ClassMethods
       include Logging
 
