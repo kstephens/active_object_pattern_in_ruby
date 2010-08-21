@@ -1,8 +1,8 @@
 # !SLIDE :name example_1 :capture_code_output true
-# Example with Identity Facade
+# Example with Passive Facade
 
 require 'example_class'
-$stderr.puts "Example with Identity Facade" # !SLIDE IGNORE
+$stderr.puts "Example with Passive Facade" # !SLIDE IGNORE
 A.active_facade = B.active_facade = nil
 a = A.new
 b = B.new
@@ -52,10 +52,10 @@ b = B.new
 a.b = b
 b.a = a
 
-a._active_add_distributee! ActiveObject::Facade::Active
-a._active_add_distributee! ActiveObject::Facade::Active
-b._active_add_distributee! ActiveObject::Facade::Active
-b._active_add_distributee! ActiveObject::Facade::Active
+a._active_add_facade! ActiveObject::Facade::Active
+a._active_add_facade! ActiveObject::Facade::Active
+b._active_add_facade! ActiveObject::Facade::Active
+b._active_add_facade! ActiveObject::Facade::Active
 
 a.foo("Foo") 
 b.bar("Bar") 

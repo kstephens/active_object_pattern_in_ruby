@@ -1,7 +1,7 @@
 require 'thread' # Thread, Mutex, Queue
 
 # !SLIDE
-# Active Object pattern in Ruby
+# Active Object Pattern in Ruby
 #
 # * Kurt Stephens
 # * 2010/08/20
@@ -29,15 +29,6 @@ require 'thread' # Thread, Mutex, Queue
 # * "":http://en.wikipedia.org/wiki/Design_pattern_%28computer_science%29
 # * "":http://en.wikipedia.org/wiki/Active_object
 
-# !SLIDE
-# Implementation
-#
-# * ActiveObject::Mixin - module to mixin to existing classes.
-# * ActiveObject::Facade - encapsuates object to receive messages.
-# * ActiveObject::Facade::Identity - passive facade delivers message immediately to current Thread.
-# * ActiveObject::Facade::Active - active facade managing a Thread and a Queue of Messages.
-# * ActiveObject::Facade::Active::Message - encapsulate message for proxy for later execution by thread. 
-
 =begin
 # !SLIDE
 # Ruby Pattern for Asynchronous Results
@@ -51,13 +42,19 @@ target.selector(*arguments) do | result |
 end
 
 # !SLIDE END
-
 =end
 
-# !SLIDE 
-# ActiveObject Mixin
+# !SLIDE
+# Implementation
 #
-# Adds methods to construct an active Facade object for instances of the including Class.
+# * ActiveObject::Facade - encapsuates object to receive messages.
+# * ActiveObject::Facade::Passive - passive facade delivers message immediately to current Thread.
+# * ActiveObject::Facade::Active - active facade managing a Thread and a Queue of Messages.
+# * ActiveObject::Facade::Active::Message - encapsulate message for proxy for later execution by thread. 
+# * ActiveObject::Mixin - module to mixin to existing classes to handle Facade creation/initialization.
+
+# !SLIDE
+# ActiveObject module
 module ActiveObject
   # Generic API error.
   class Error < ::Exception; end
@@ -90,10 +87,10 @@ module ActiveObject
     end
 
     # !SLIDE
-    # Identity Facade
+    # Passive Facade
     #
     # Immediately delegate to the target.
-    class Identity < self
+    class Passive < self
       # !SLIDE
       # Delegate message directly
       #
@@ -106,7 +103,7 @@ module ActiveObject
       end
 
       # !SLIDE
-      # Identity Thread Management
+      # Passive Thread Management
 
       # Nothing to start; this Facade is not active.
       def _active_start!
@@ -286,7 +283,7 @@ module ActiveObject
     # Distributor
     #
     # Distributor distributes work to other Facades via round-robin.
-    class Distributor < Identity
+    class Distributor < Passive
 
       # !SLIDE 
       # Distributor Initialization
@@ -315,10 +312,11 @@ module ActiveObject
       # !SLIDE END
 
       # !SLIDE
-      # Add Mulitple Facades
-      def _active_add_distributee! cls, new_target = nil
+      # Add Multiple Facades
+      def _active_add_facade! cls, new_target = nil
         @mutex.synchronize do
-          target = new_target || (Proc === @target ? @target.call : @target.clone)
+          target = new_target || 
+            (Proc === @target ? @target.call : @target.dup)
           @target_list << cls.new(target)
         end
       end
@@ -357,7 +355,7 @@ module ActiveObject
       def new *arguments, &block
         _log { "arguments=#{arguments.inspect}" }
         obj = super(*arguments, &block)
-        facade = (active_facade || Facade::Identity).new(obj)
+        facade = (active_facade || Facade::Passive).new(obj)
         _log { "facade=@#{facade.object_id}" }
         facade
       end
